@@ -8,6 +8,7 @@
 
 // User configurable.
 const ROM_FILENAME = 'projects/survivor-gb/rom/game.gb'; // <!-- Needs correct file path -->
+
 const ENABLE_REWIND = true;
 const ENABLE_PAUSE = false;
 const ENABLE_SWITCH_PALETTES = true;
