@@ -4,11 +4,10 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
-'use strict';
+"use strict";
 
 // User configurable.
 const ROM_FILENAME = 'projects/survivor-gb/rom/game.gb'; // <!-- Needs correct file path -->
-
 const ENABLE_REWIND = true;
 const ENABLE_PAUSE = false;
 const ENABLE_SWITCH_PALETTES = true;
@@ -59,27 +58,27 @@ const REWIND_BUFFER_CAPACITY = 4 * 1024 * 1024;
 const REWIND_FACTOR = 1.5;
 const REWIND_UPDATE_MS = 16;
 const GAMEPAD_POLLING_INTERVAL = 1000 / 60 / 4; // When activated, poll for gamepad input about ~4 times per gameboy frame (~240 times second)
-const GAMEPAD_KEYMAP_STANDARD_STR = 'standard'; // Try to use "standard" HTML5 mapping config if available
+const GAMEPAD_KEYMAP_STANDARD_STR = "standard"; // Try to use "standard" HTML5 mapping config if available
 
 const $ = document.querySelector.bind(document);
 let emulator = null;
 
-const controllerEl = $('#controller');
-const dpadEl = $('#controller_dpad');
-const selectEl = $('#controller_select');
-const startEl = $('#controller_start');
-const bEl = $('#controller_b');
-const aEl = $('#controller_a');
+const controllerEl = $("#controller");
+const dpadEl = $("#controller_dpad");
+const selectEl = $("#controller_select");
+const startEl = $("#controller_start");
+const bEl = $("#controller_b");
+const aEl = $("#controller_a");
 
 const binjgbPromise = Binjgb();
 
-const sgbEnabled = window.location.href.includes('sgb=true');
+const sgbEnabled = window.location.href.includes("sgb=true");
 if (sgbEnabled) {
-  $('canvas').width = SGB_SCREEN_WIDTH;
-  $('canvas').height = SGB_SCREEN_HEIGHT;
+  $("canvas").width = SGB_SCREEN_WIDTH;
+  $("canvas").height = SGB_SCREEN_HEIGHT;
 } else {
-  $('canvas').width = SCREEN_WIDTH;
-  $('canvas').height = SCREEN_HEIGHT;
+  $("canvas").width = SCREEN_WIDTH;
+  $("canvas").height = SCREEN_HEIGHT;
 }
 
 // Extract stuff from the vue.js implementation in demo.js.
@@ -132,7 +131,7 @@ class VM {
   updateExtRam() {
     if (!emulator) return;
     const extram = emulator.getExtRam();
-    localStorage.setItem('extram', JSON.stringify(Array.from(extram)));
+    localStorage.setItem("extram", JSON.stringify(Array.from(extram)));
   }
 }
 
@@ -142,7 +141,7 @@ const vm = new VM();
 (async function go() {
   let response = await fetch(ROM_FILENAME);
   let romBuffer = await response.arrayBuffer();
-  const extRam = new Uint8Array(JSON.parse(localStorage.getItem('extram')));
+  const extRam = new Uint8Array(JSON.parse(localStorage.getItem("extram")));
   Emulator.start(await binjgbPromise, romBuffer, extRam);
   emulator.setBuiltinPalette(vm.palIdx);
 })();
@@ -169,22 +168,22 @@ class Emulator {
     this.module = module;
     this.romDataPtr = this.module._malloc(romBuffer.byteLength);
     makeWasmBuffer(this.module, this.romDataPtr, romBuffer.byteLength).set(
-      new Uint8Array(romBuffer),
+      new Uint8Array(romBuffer)
     );
     this.e = this.module._emulator_new_simple(
       this.romDataPtr,
       romBuffer.byteLength,
       Audio.ctx.sampleRate,
       AUDIO_FRAMES,
-      CGB_COLOR_CURVE,
+      CGB_COLOR_CURVE
     );
     if (this.e == 0) {
-      throw new Error('Invalid ROM.');
+      throw new Error("Invalid ROM.");
     }
 
     this.gamepad = new Gamepad(module, this.e);
     this.audio = new Audio(module, this.e);
-    this.video = new Video(module, this.e, $('canvas'));
+    this.video = new Video(module, this.e, $("canvas"));
     this.rewind = new Rewind(module, this.e);
     this.rewindIntervalId = 0;
 
@@ -199,7 +198,7 @@ class Emulator {
     this.bindKeys();
     this.bindTouch();
 
-    this.touchEnabled = 'ontouchstart' in document.documentElement;
+    this.touchEnabled = "ontouchstart" in document.documentElement;
     this.updateOnscreenGamepad();
 
     this.gamepad.init();
@@ -221,7 +220,7 @@ class Emulator {
     const buffer = makeWasmBuffer(
       this.module,
       this.module._get_file_data_ptr(fileDataPtr),
-      this.module._get_file_data_size(fileDataPtr),
+      this.module._get_file_data_size(fileDataPtr)
     );
     const result = cb(fileDataPtr, buffer);
     this.module._file_data_delete(fileDataPtr);
@@ -363,7 +362,7 @@ class Emulator {
   }
 
   updateOnscreenGamepad() {
-    $('#controller').style.display = this.touchEnabled ? 'block' : 'none';
+    $("#controller").style.display = this.touchEnabled ? "block" : "none";
   }
 
   bindTouch() {
@@ -376,46 +375,46 @@ class Emulator {
 
     this.boundButtonTouchStart = this.buttonTouchStart.bind(this);
     this.boundButtonTouchEnd = this.buttonTouchEnd.bind(this);
-    selectEl.addEventListener('touchstart', this.boundButtonTouchStart);
-    selectEl.addEventListener('touchend', this.boundButtonTouchEnd);
-    startEl.addEventListener('touchstart', this.boundButtonTouchStart);
-    startEl.addEventListener('touchend', this.boundButtonTouchEnd);
-    bEl.addEventListener('touchstart', this.boundButtonTouchStart);
-    bEl.addEventListener('touchend', this.boundButtonTouchEnd);
-    aEl.addEventListener('touchstart', this.boundButtonTouchStart);
-    aEl.addEventListener('touchend', this.boundButtonTouchEnd);
+    selectEl.addEventListener("touchstart", this.boundButtonTouchStart);
+    selectEl.addEventListener("touchend", this.boundButtonTouchEnd);
+    startEl.addEventListener("touchstart", this.boundButtonTouchStart);
+    startEl.addEventListener("touchend", this.boundButtonTouchEnd);
+    bEl.addEventListener("touchstart", this.boundButtonTouchStart);
+    bEl.addEventListener("touchend", this.boundButtonTouchEnd);
+    aEl.addEventListener("touchstart", this.boundButtonTouchStart);
+    aEl.addEventListener("touchend", this.boundButtonTouchEnd);
 
     this.boundDpadTouchStartMove = this.dpadTouchStartMove.bind(this);
     this.boundDpadTouchEnd = this.dpadTouchEnd.bind(this);
-    dpadEl.addEventListener('touchstart', this.boundDpadTouchStartMove);
-    dpadEl.addEventListener('touchmove', this.boundDpadTouchStartMove);
-    dpadEl.addEventListener('touchend', this.boundDpadTouchEnd);
+    dpadEl.addEventListener("touchstart", this.boundDpadTouchStartMove);
+    dpadEl.addEventListener("touchmove", this.boundDpadTouchStartMove);
+    dpadEl.addEventListener("touchend", this.boundDpadTouchEnd);
 
     this.boundTouchRestore = this.touchRestore.bind(this);
-    window.addEventListener('touchstart', this.boundTouchRestore);
+    window.addEventListener("touchstart", this.boundTouchRestore);
   }
 
   unbindTouch() {
-    selectEl.removeEventListener('touchstart', this.boundButtonTouchStart);
-    selectEl.removeEventListener('touchend', this.boundButtonTouchEnd);
-    startEl.removeEventListener('touchstart', this.boundButtonTouchStart);
-    startEl.removeEventListener('touchend', this.boundButtonTouchEnd);
-    bEl.removeEventListener('touchstart', this.boundButtonTouchStart);
-    bEl.removeEventListener('touchend', this.boundButtonTouchEnd);
-    aEl.removeEventListener('touchstart', this.boundButtonTouchStart);
-    aEl.removeEventListener('touchend', this.boundButtonTouchEnd);
+    selectEl.removeEventListener("touchstart", this.boundButtonTouchStart);
+    selectEl.removeEventListener("touchend", this.boundButtonTouchEnd);
+    startEl.removeEventListener("touchstart", this.boundButtonTouchStart);
+    startEl.removeEventListener("touchend", this.boundButtonTouchEnd);
+    bEl.removeEventListener("touchstart", this.boundButtonTouchStart);
+    bEl.removeEventListener("touchend", this.boundButtonTouchEnd);
+    aEl.removeEventListener("touchstart", this.boundButtonTouchStart);
+    aEl.removeEventListener("touchend", this.boundButtonTouchEnd);
 
-    dpadEl.removeEventListener('touchstart', this.boundDpadTouchStartMove);
-    dpadEl.removeEventListener('touchmove', this.boundDpadTouchStartMove);
-    dpadEl.removeEventListener('touchend', this.boundDpadTouchEnd);
+    dpadEl.removeEventListener("touchstart", this.boundDpadTouchStartMove);
+    dpadEl.removeEventListener("touchmove", this.boundDpadTouchStartMove);
+    dpadEl.removeEventListener("touchend", this.boundDpadTouchEnd);
 
-    window.removeEventListener('touchstart', this.boundTouchRestore);
+    window.removeEventListener("touchstart", this.boundTouchRestore);
   }
 
   buttonTouchStart(event) {
     if (event.currentTarget.id in this.touchFuncs) {
       this.touchFuncs[event.currentTarget.id](true);
-      event.currentTarget.classList.add('btnPressed');
+      event.currentTarget.classList.add("btnPressed");
       event.preventDefault();
     }
   }
@@ -423,7 +422,7 @@ class Emulator {
   buttonTouchEnd(event) {
     if (event.currentTarget.id in this.touchFuncs) {
       this.touchFuncs[event.currentTarget.id](false);
-      event.currentTarget.classList.remove('btnPressed');
+      event.currentTarget.classList.remove("btnPressed");
       event.preventDefault();
     }
   }
@@ -479,9 +478,9 @@ class Emulator {
   bindKeys() {
     this.keyFuncs = {
       Backspace: this.keyRewind.bind(this),
-      ' ': this.keyPause.bind(this),
-      '[': this.keyPrevPalette.bind(this),
-      ']': this.keyNextPalette.bind(this),
+      " ": this.keyPause.bind(this),
+      "[": this.keyPrevPalette.bind(this),
+      "]": this.keyNextPalette.bind(this),
     };
 
     if (customControls.down && customControls.down.length > 0) {
@@ -489,8 +488,8 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypDown.bind(this);
       });
     } else {
-      this.keyFuncs['ArrowDown'] = this.setJoypDown.bind(this);
-      this.keyFuncs['s'] = this.setJoypDown.bind(this);
+      this.keyFuncs["ArrowDown"] = this.setJoypDown.bind(this);
+      this.keyFuncs["s"] = this.setJoypDown.bind(this);
     }
 
     if (customControls.left && customControls.left.length > 0) {
@@ -498,8 +497,8 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypLeft.bind(this);
       });
     } else {
-      this.keyFuncs['ArrowLeft'] = this.setJoypLeft.bind(this);
-      this.keyFuncs['a'] = this.setJoypLeft.bind(this);
+      this.keyFuncs["ArrowLeft"] = this.setJoypLeft.bind(this);
+      this.keyFuncs["a"] = this.setJoypLeft.bind(this);
     }
 
     if (customControls.right && customControls.right.length > 0) {
@@ -507,8 +506,8 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypRight.bind(this);
       });
     } else {
-      this.keyFuncs['ArrowRight'] = this.setJoypRight.bind(this);
-      this.keyFuncs['d'] = this.setJoypRight.bind(this);
+      this.keyFuncs["ArrowRight"] = this.setJoypRight.bind(this);
+      this.keyFuncs["d"] = this.setJoypRight.bind(this);
     }
 
     if (customControls.up && customControls.up.length > 0) {
@@ -516,8 +515,8 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypUp.bind(this);
       });
     } else {
-      this.keyFuncs['ArrowUp'] = this.setJoypUp.bind(this);
-      this.keyFuncs['w'] = this.setJoypUp.bind(this);
+      this.keyFuncs["ArrowUp"] = this.setJoypUp.bind(this);
+      this.keyFuncs["w"] = this.setJoypUp.bind(this);
     }
 
     if (customControls.a && customControls.a.length > 0) {
@@ -525,9 +524,9 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypA.bind(this);
       });
     } else {
-      this.keyFuncs['z'] = this.setJoypA.bind(this);
-      this.keyFuncs['j'] = this.setJoypA.bind(this);
-      this.keyFuncs['Alt'] = this.setJoypA.bind(this);
+      this.keyFuncs["z"] = this.setJoypA.bind(this);
+      this.keyFuncs["j"] = this.setJoypA.bind(this);
+      this.keyFuncs["Alt"] = this.setJoypA.bind(this);
     }
 
     if (customControls.b && customControls.b.length > 0) {
@@ -535,9 +534,9 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypB.bind(this);
       });
     } else {
-      this.keyFuncs['x'] = this.setJoypB.bind(this);
-      this.keyFuncs['k'] = this.setJoypB.bind(this);
-      this.keyFuncs['Control'] = this.setJoypB.bind(this);
+      this.keyFuncs["x"] = this.setJoypB.bind(this);
+      this.keyFuncs["k"] = this.setJoypB.bind(this);
+      this.keyFuncs["Control"] = this.setJoypB.bind(this);
     }
 
     if (customControls.start && customControls.start.length > 0) {
@@ -545,7 +544,7 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypStart.bind(this);
       });
     } else {
-      this.keyFuncs['Enter'] = this.setJoypStart.bind(this);
+      this.keyFuncs["Enter"] = this.setJoypStart.bind(this);
     }
 
     if (customControls.select && customControls.select.length > 0) {
@@ -553,23 +552,23 @@ class Emulator {
         this.keyFuncs[k] = this.setJoypSelect.bind(this);
       });
     } else {
-      this.keyFuncs['Shift'] = this.setJoypSelect.bind(this);
+      this.keyFuncs["Shift"] = this.setJoypSelect.bind(this);
     }
 
     this.boundKeyDown = this.keyDown.bind(this);
     this.boundKeyUp = this.keyUp.bind(this);
 
-    window.addEventListener('keydown', this.boundKeyDown);
-    window.addEventListener('keyup', this.boundKeyUp);
+    window.addEventListener("keydown", this.boundKeyDown);
+    window.addEventListener("keyup", this.boundKeyUp);
   }
 
   unbindKeys() {
-    window.removeEventListener('keydown', this.boundKeyDown);
-    window.removeEventListener('keyup', this.boundKeyUp);
+    window.removeEventListener("keydown", this.boundKeyDown);
+    window.removeEventListener("keyup", this.boundKeyUp);
   }
 
   keyDown(event) {
-    if (event.key === 'w' && (event.metaKey || event.ctrlKey)) {
+    if (event.key === "w" && (event.metaKey || event.ctrlKey)) {
       return;
     }
     if (event.key in this.keyFuncs) {
@@ -667,102 +666,102 @@ class Gamepad {
   bindKeys(strMapping) {
     this.GAMEPAD_KEYMAP_STANDARD = [
       {
-        gb_key: 'b',
+        gb_key: "b",
         gp_button: 0,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_B.bind(null, this.e),
       },
       {
-        gb_key: 'a',
+        gb_key: "a",
         gp_button: 1,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_A.bind(null, this.e),
       },
       {
-        gb_key: 'select',
+        gb_key: "select",
         gp_button: 8,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_select.bind(null, this.e),
       },
       {
-        gb_key: 'start',
+        gb_key: "start",
         gp_button: 9,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_start.bind(null, this.e),
       },
       {
-        gb_key: 'up',
+        gb_key: "up",
         gp_button: 12,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_up.bind(null, this.e),
       },
       {
-        gb_key: 'down',
+        gb_key: "down",
         gp_button: 13,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_down.bind(null, this.e),
       },
       {
-        gb_key: 'left',
+        gb_key: "left",
         gp_button: 14,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_left.bind(null, this.e),
       },
       {
-        gb_key: 'right',
+        gb_key: "right",
         gp_button: 15,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_right.bind(null, this.e),
       },
     ];
 
     this.GAMEPAD_KEYMAP_DEFAULT = [
       {
-        gb_key: 'a',
+        gb_key: "a",
         gp_button: 0,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_A.bind(null, this.e),
       },
       {
-        gb_key: 'b',
+        gb_key: "b",
         gp_button: 1,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_B.bind(null, this.e),
       },
       {
-        gb_key: 'select',
+        gb_key: "select",
         gp_button: 2,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_select.bind(null, this.e),
       },
       {
-        gb_key: 'start',
+        gb_key: "start",
         gp_button: 3,
-        type: 'button',
+        type: "button",
         gp_bind: this.module._set_joyp_start.bind(null, this.e),
       },
       {
-        gb_key: 'up',
+        gb_key: "up",
         gp_button: 2,
-        type: 'axis',
+        type: "axis",
         gp_bind: this.module._set_joyp_up.bind(null, this.e),
       },
       {
-        gb_key: 'down',
+        gb_key: "down",
         gp_button: 3,
-        type: 'axis',
+        type: "axis",
         gp_bind: this.module._set_joyp_down.bind(null, this.e),
       },
       {
-        gb_key: 'left',
+        gb_key: "left",
         gp_button: 0,
-        type: 'axis',
+        type: "axis",
         gp_bind: this.module._set_joyp_left.bind(null, this.e),
       },
       {
-        gb_key: 'right',
+        gb_key: "right",
         gp_button: 1,
-        type: 'axis',
+        type: "axis",
         gp_bind: this.module._set_joyp_right.bind(null, this.e),
       },
     ];
@@ -818,9 +817,9 @@ class Gamepad {
     let buttonCache;
 
     // Select button / axis cache based on key bind type
-    if (keyBind.type === 'button') {
+    if (keyBind.type === "button") {
       buttonCache = this.gp.buttons;
-    } else if (keyBind.type === 'axis') {
+    } else if (keyBind.type === "axis") {
       buttonCache = this.gp.axes;
     }
 
@@ -886,7 +885,7 @@ class Gamepad {
       // Start polling the gamepad for input
       this.gp.timerID = setInterval(
         () => this.update(),
-        GAMEPAD_POLLING_INTERVAL,
+        GAMEPAD_POLLING_INTERVAL
       );
     }
   }
@@ -951,22 +950,22 @@ class Gamepad {
     this.boundGamepadDisconnected = this.eventDisconnected.bind(this);
 
     // When a gamepad connects, start polling it for input
-    window.addEventListener('gamepadconnected', this.boundGamepadConnected);
+    window.addEventListener("gamepadconnected", this.boundGamepadConnected);
 
     // When a gamepad disconnects, shut down polling for input
     window.addEventListener(
-      'gamepaddisconnected',
-      this.boundGamepadDisconnected,
+      "gamepaddisconnected",
+      this.boundGamepadDisconnected
     );
   }
 
   // Release event connection handlers and settings
   shutdown() {
     this.releaseGamepad();
-    window.removeEventListener('gamepadconnected', this.boundGamepadConnected);
+    window.removeEventListener("gamepadconnected", this.boundGamepadConnected);
     window.removeEventListener(
-      'gamepaddisconnected',
-      this.boundGamepadDisconnected,
+      "gamepaddisconnected",
+      this.boundGamepadDisconnected
     );
   }
 }
@@ -978,21 +977,21 @@ class Audio {
     this.buffer = makeWasmBuffer(
       this.module,
       this.module._get_audio_buffer_ptr(e),
-      this.module._get_audio_buffer_capacity(e),
+      this.module._get_audio_buffer_capacity(e)
     );
     this.startSec = 0;
     this.resume();
 
     this.boundStartPlayback = this.startPlayback.bind(this);
-    window.addEventListener('keydown', this.boundStartPlayback, true);
-    window.addEventListener('click', this.boundStartPlayback, true);
-    window.addEventListener('touchend', this.boundStartPlayback, true);
+    window.addEventListener("keydown", this.boundStartPlayback, true);
+    window.addEventListener("click", this.boundStartPlayback, true);
+    window.addEventListener("touchend", this.boundStartPlayback, true);
   }
 
   startPlayback() {
-    window.removeEventListener('touchend', this.boundStartPlayback, true);
-    window.removeEventListener('keydown', this.boundStartPlayback, true);
-    window.removeEventListener('click', this.boundStartPlayback, true);
+    window.removeEventListener("touchend", this.boundStartPlayback, true);
+    window.removeEventListener("keydown", this.boundStartPlayback, true);
+    window.removeEventListener("click", this.boundStartPlayback, true);
     this.started = true;
     this.resume();
   }
@@ -1025,11 +1024,11 @@ class Audio {
       this.startSec += bufferSec;
     } else {
       console.log(
-        'Resetting audio (' +
+        "Resetting audio (" +
           this.startSec.toFixed(2) +
-          ' < ' +
+          " < " +
           nowSec.toFixed(2) +
-          ')',
+          ")"
       );
       this.startSec = nowPlusLatency;
     }
@@ -1071,12 +1070,12 @@ class Video {
     this.buffer = makeWasmBuffer(
       this.module,
       this.module._get_frame_buffer_ptr(e),
-      this.module._get_frame_buffer_size(e),
+      this.module._get_frame_buffer_size(e)
     );
     this.sgbBuffer = makeWasmBuffer(
       this.module,
       this.module._get_sgb_frame_buffer_ptr(e),
-      this.module._get_sgb_frame_buffer_size(e),
+      this.module._get_sgb_frame_buffer_size(e)
     );
   }
 
@@ -1091,17 +1090,17 @@ class Video {
 
 class Canvas2DRenderer {
   constructor(el) {
-    this.ctx = el.getContext('2d');
+    this.ctx = el.getContext("2d");
     this.imageData = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
     this.sgbImageData = this.ctx.createImageData(
       SGB_SCREEN_WIDTH,
-      SGB_SCREEN_HEIGHT,
+      SGB_SCREEN_HEIGHT
     );
 
-    this.overlayCanvas = document.createElement('canvas');
+    this.overlayCanvas = document.createElement("canvas");
     this.overlayCanvas.width = SGB_SCREEN_WIDTH;
     this.overlayCanvas.height = SGB_SCREEN_HEIGHT;
-    this.overlayCtx = this.overlayCanvas.getContext('2d');
+    this.overlayCtx = this.overlayCanvas.getContext("2d");
   }
 
   uploadTextures(buffer, sgbBuffer) {
@@ -1122,11 +1121,11 @@ class Canvas2DRenderer {
 
 class WebGLRenderer {
   constructor(el) {
-    const gl = (this.gl = el.getContext('webgl', {
+    const gl = (this.gl = el.getContext("webgl", {
       preserveDrawingBuffer: true,
     }));
     if (gl === null) {
-      throw new Error('unable to create webgl context');
+      throw new Error("unable to create webgl context");
     }
 
     function compileShader(type, source) {
@@ -1147,7 +1146,7 @@ class WebGLRenderer {
         void main(void) {
           gl_Position = vec4(aPos, 0.0, 1.0);
           vTexCoord = aTexCoord;
-        }`,
+        }`
     );
     const fragmentShader = compileShader(
       gl.FRAGMENT_SHADER,
@@ -1155,7 +1154,7 @@ class WebGLRenderer {
         uniform sampler2D uSampler;
         void main(void) {
           gl_FragColor = texture2D(uSampler, vTexCoord);
-        }`,
+        }`
     );
 
     const program = gl.createProgram();
@@ -1167,9 +1166,9 @@ class WebGLRenderer {
     }
     gl.useProgram(program);
 
-    this.aPos = gl.getAttribLocation(program, 'aPos');
-    this.aTexCoord = gl.getAttribLocation(program, 'aTexCoord');
-    this.uSampler = gl.getUniformLocation(program, 'uSampler');
+    this.aPos = gl.getAttribLocation(program, "aPos");
+    this.aTexCoord = gl.getAttribLocation(program, "aTexCoord");
+    this.uSampler = gl.getUniformLocation(program, "uSampler");
 
     this.fbTexture = this.createTexture();
     this.sgbFbTexture = this.createTexture();
@@ -1264,7 +1263,7 @@ class WebGLRenderer {
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      null,
+      null
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -1283,7 +1282,7 @@ class WebGLRenderer {
       SCREEN_HEIGHT,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      buffer,
+      buffer
     );
 
     gl.bindTexture(gl.TEXTURE_2D, this.sgbFbTexture);
@@ -1296,7 +1295,7 @@ class WebGLRenderer {
       SGB_SCREEN_HEIGHT,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      sgbBuffer,
+      sgbBuffer
     );
   }
 
@@ -1331,7 +1330,7 @@ class Rewind {
     this.bufferPtr = this.module._rewind_new_simple(
       e,
       REWIND_FRAMES_PER_BASE_STATE,
-      REWIND_BUFFER_CAPACITY,
+      REWIND_BUFFER_CAPACITY
     );
     this.module._emulator_set_default_joypad_callback(e, this.joypadBufferPtr);
   }
@@ -1364,7 +1363,7 @@ class Rewind {
     this.statePtr = this.module._rewind_begin(
       this.e,
       this.bufferPtr,
-      this.joypadBufferPtr,
+      this.joypadBufferPtr
     );
   }
 
@@ -1379,7 +1378,7 @@ class Rewind {
     if (!this.isRewinding) return;
     this.module._emulator_set_default_joypad_callback(
       this.e,
-      this.joypadBufferPtr,
+      this.joypadBufferPtr
     );
     this.module._rewind_end(this.statePtr);
     this.statePtr = 0;
