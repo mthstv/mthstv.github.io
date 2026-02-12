@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -16,9 +16,19 @@
   </head>
   <body>
     <div id="game">
+      <div class="desktop-controls left-controls">
+        <h3>D-Pad</h3>
+        <p>Arrow Keys</p>
+        <div class="key-display">↑ ↓ ← →</div>
+      </div>
       <canvas id="mainCanvas" width="256" height="224"
         >No Canvas Support</canvas
       >
+      <div class="desktop-controls right-controls">
+        <h3>Buttons</h3>
+        <p><span class="key">Z</span> = A Button</p>
+        <p><span class="key">X</span> = B Button</p>
+      </div>
     </div>
     <div id="controller">
       <div id="controller_dpad">
